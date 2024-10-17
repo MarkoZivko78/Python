@@ -1,0 +1,4 @@
+-- database: ../databases/users_database.db
+
+DELETE FROM records;
+DELETE FROM sqlite_sequence WHERE name='records';
