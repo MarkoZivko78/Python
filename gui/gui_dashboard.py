@@ -3,6 +3,7 @@ from tkinter import Menu, Frame, Label, Entry, Button, filedialog, messagebox
 from tkinter import ttk  # Dodaj ttk za Treeview
 from backend.record_dash_database import Dashboard
 from backend.export_records import Export
+import pyperclip
 
 
 
@@ -106,6 +107,12 @@ class DashboardWindow:
 
         # Učitaj korisničke podatke
         self.load_user_data()
+        
+        self.context_menu = Menu(self.master, tearoff=0)
+        self.context_menu.add_command(label="Copy", command=self.copy_selected_data)
+        
+        self.tree.bind("<Button-3>", self.show_context_menu)
+        
 
         self.master.after(100, self.center_window)
 
@@ -157,16 +164,23 @@ class DashboardWindow:
         username = self.entry_username.get()
         password = self.entry_password.get()
         url = self.entry_url.get()
-        notes = self.entry_notes.get()  # Ovo može biti opcionalno
+        notes = self.entry_notes.get()
 
-        #print(f"Title: {title}, Username: {username}, Password: {password}, URL: {url}, Notes: {notes}")
-
+        # Proverite da li su svi potrebni podaci uneti
         if title and username and password and url:  # Možete dodati notes ako je potreban
             self.db.add_record(title, username, url, password, notes)
             messagebox.showinfo("Success", "Zapis uspešno dodat!")
+
+            # Resetujte polja nakon dodavanja
+            self.entry_title.delete(0, tk.END)  # Ispravljeno
+            self.entry_username.delete(0, tk.END)  # Ispravljeno
+            self.entry_password.delete(0, tk.END)  # Ispravljeno
+            self.entry_url.delete(0, tk.END)  # Ispravljeno
+            self.entry_notes.delete(0, tk.END)  # Ispravljeno
+
             self.load_user_data()  # Osveži tabelu nakon dodavanja
         else:
-            messagebox.showwarning("Input Error", "Sva polja moraju biti popunjena!")  # Prilagodite ovu poruku ako je potrebno
+            messagebox.showwarning("Input Error", "Sva polja moraju biti popunjena!")
     
     def refresh_records_table(self):
         """Osvežava tabelu sa podacima iz baze."""
@@ -231,6 +245,33 @@ class DashboardWindow:
     def show_about(self):
         messagebox.showinfo("About", "Ovo je dashboard aplikacija.")
         
+        
+    def show_context_menu(self, event):
+        """Prikažite kontekstualni meni pri desnom kliku."""
+        try:
+            self.tree.selection_set(self.tree.identify_row(event.y))  # Selektujte red na koji je desni klik
+            self.context_menu.post(event.x_root, event.y_root)  # Prikažite meni
+        except Exception as e:
+            print(e)
+
+    def copy_selected_data(self):
+        """Kopirajte izabrani tekst iz Treeview u clipboard."""
+        selected_item = self.tree.selection()  # Dobijte izabrani red
+        if selected_item:  # Proverite da li je red izabran
+            item_values = self.tree.item(selected_item, 'values')  # Dobijte vrednosti izabranog reda
+            if item_values:
+                # Korisnik može izabrati koji element da kopira
+                selected_column = self.tree.identify_column(self.tree.winfo_pointerx() - self.tree.winfo_rootx())
+                column_index = int(selected_column.replace('#', '')) - 1  # Konvertuj u indeks
+                text_to_copy = item_values[column_index]  # Dobijte tekst iz selektovane kolone
+                pyperclip.copy(text_to_copy)  # Kopirajte u clipboard
+            else:
+                # Ova poruka se može zadržati ako želite obavestiti korisnika u slučaju problema
+                tk.messagebox.showwarning("Warning", "No data to copy.")
+        else:
+            # Ova poruka se može zadržati ako želite obavestiti korisnika u slučaju problema
+            tk.messagebox.showwarning("Warning", "No item selected.") 
+   
         
     def on_close(self):
         self.master.quit()
