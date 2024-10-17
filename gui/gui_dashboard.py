@@ -1,12 +1,9 @@
 import tkinter as tk
-from tkinter import Menu, Frame, Label, Entry, Button, filedialog, messagebox
+from tkinter import Menu, Frame, Label, Entry, Button, filedialog, messagebox, Text
 from tkinter import ttk  # Dodaj ttk za Treeview
 from backend.record_dash_database import Dashboard
 from backend.export_records import Export
 import pyperclip
-
-
-
 
 class DashboardWindow:
     def __init__(self, master, user_id):
@@ -17,9 +14,10 @@ class DashboardWindow:
         self.db = Dashboard("databases/users_database.db")  # Putanja do baze
         
         self.show_passwords = False
+        
 
         # Postavi dimenzije prozora
-        master.geometry("800x640")  
+        master.geometry("1000x750")  
         
         # Kreiraj menije
         self.menu_bar = Menu(master)
@@ -29,8 +27,8 @@ class DashboardWindow:
 
         # Dodaj File meni
         self.file_menu = Menu(self.menu_bar, tearoff=0)
-        self.file_menu.add_command(label="Create Database", command=self.create_database_gui)
-        self.file_menu.add_command(label="Import Database", command=self.import_data)
+        self.file_menu.add_command(label="Create Database", command=self.create_database_gui, state=tk.DISABLED)
+        self.file_menu.add_command(label="Import Database", command=self.import_data, state=tk.DISABLED)
         self.file_menu.add_command(label="Export Records", command=self.export_data)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=master.quit)
@@ -42,43 +40,65 @@ class DashboardWindow:
         self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
 
         # Leva strana: Polja za unos
-        self.frame_left = Frame(master, width=250, bg='lightgrey')
+        self.frame_left = tk.Frame(master, width=250, bg='lightgrey', padx=10, pady=10)
         self.frame_left.pack(side='left', fill='y')
 
-        self.label_title = Label(self.frame_left, text="Title:", bg='lightgrey', height=1)
-        self.label_title.pack(pady=5)
-        self.entry_title = Entry(self.frame_left)
-        self.entry_title.pack(pady=5)
+        # Title Entry
+        self.label_title = tk.Label(self.frame_left, text="Title:", bg='lightgrey', height=1)
+        self.label_title.pack(pady=(5, 2))
+        self.entry_title = tk.Entry(self.frame_left, width=30, bg='lightgrey')
+        self.entry_title.pack(pady=(0, 10))
+        self.entry_title.bind("<FocusIn>", self.on_entry_focus_in)
+        self.entry_title.bind("<FocusOut>", self.on_entry_focus_out)
 
-        self.label_username = Label(self.frame_left, text="Username:", bg='lightgrey', height=1)
-        self.label_username.pack(pady=5)
-        self.entry_username = Entry(self.frame_left)
-        self.entry_username.pack(pady=5)
+        # Username Entry
+        self.label_username = tk.Label(self.frame_left, text="Username:", bg='lightgrey', height=1)
+        self.label_username.pack(pady=(5, 2))
+        self.entry_username = tk.Entry(self.frame_left, width=30, bg='lightgrey')
+        self.entry_username.pack(pady=(0, 10))
+        self.entry_username.bind("<FocusIn>", self.on_entry_focus_in)
+        self.entry_username.bind("<FocusOut>", self.on_entry_focus_out)
 
-        self.label_password = Label(self.frame_left, text="Password:", bg='lightgrey', height=1)
-        self.label_password.pack(pady=5)
-        self.entry_password = Entry(self.frame_left, show='*')
-        self.entry_password.pack(pady=5)
-
-        self.label_url = Label(self.frame_left, text="URL:", bg='lightgrey', height=1)
-        self.label_url.pack(pady=5)
-        self.entry_url = Entry(self.frame_left)
-        self.entry_url.pack(pady=5)
-
-        # Dodaj Label za Notes
-        self.label_notes = Label(self.frame_left, text="Notes:", bg='lightgrey', height=1)
-        self.label_notes.pack(pady=5)
-        self.entry_notes = Entry(self.frame_left)
-        self.entry_notes.pack(pady=5)
-
-        self.button_add = Button(self.frame_left, text="Add Record", command=self.add_record)
-        self.button_add.pack(pady=5)
+        # Password Entry
+        self.label_password = tk.Label(self.frame_left, text="Password:", bg='lightgrey', height=1)
+        self.label_password.pack(pady=(5, 2))
+        self.entry_password = tk.Entry(self.frame_left, show='*', width=30, bg='lightgrey')
+        self.entry_password.pack(pady=(0, 10))
+        self.entry_password.bind("<FocusIn>", self.on_entry_focus_in)
+        self.entry_password.bind("<FocusOut>", self.on_entry_focus_out)
         
-        self.button_add = Button(self.frame_left, text="Delete Record", command=self.delete_selected_record)
-        self.button_add.pack(pady=5)
-        
+        # Generate Password Button
         self.button_generate_password = Button(self.frame_left, text="Generate Password", command=self.generate_password)
-        self.button_generate_password.pack(pady=5)
+        self.button_generate_password.pack(pady=(5, 10))
+
+        # URL Entry
+        self.label_url = tk.Label(self.frame_left, text="URL:", bg='lightgrey', height=1)
+        self.label_url.pack(pady=(5, 2))
+        self.entry_url = tk.Entry(self.frame_left, width=30, bg='lightgrey')
+        self.entry_url.pack(pady=(0, 10))
+        self.entry_url.bind("<FocusIn>", self.on_entry_focus_in)
+        self.entry_url.bind("<FocusOut>", self.on_entry_focus_out)
+
+        # Notes Text
+        self.label_notes = tk.Label(self.frame_left, text="Notes:", bg='lightgrey', height=1)
+        self.label_notes.pack(pady=5)
+        self.entry_notes = tk.Text(self.frame_left, width=30, height=5, bg='lightgrey')
+        self.entry_notes.pack(pady=5)
+        self.entry_notes.bind("<FocusIn>", self.on_text_focus_in)
+        self.entry_notes.bind("<FocusOut>", self.on_text_focus_out)
+
+        # Add Record Button
+        self.button_add = Button(self.frame_left, text="Add Record", command=self.add_record)
+        self.button_add.pack(pady=(5, 5))
+
+        # Delete Record Button
+        self.button_delete = Button(self.frame_left, text="Delete Record", command=self.delete_selected_record)
+        self.button_delete.pack(pady=(5, 10))
+
+        # Exit Button (optional)
+        self.button_exit = Button(self.frame_left, text="Exit", command=master.quit)
+        self.button_exit.pack(pady=(10, 0))
+        
 
         # Desna strana: Tabela sa podacima
         self.frame_right = Frame(master)
@@ -86,7 +106,23 @@ class DashboardWindow:
 
         self.label_table = Label(self.frame_right, text="Table Records", font=("Arial", 16))
         self.label_table.pack(pady=10)
+        
+########################################################################################################################################################################################        
 
+    # Filter Label
+        self.label_filter = Label(self.frame_right, text="Filter:", font=("Arial", 12))
+        self.label_filter.pack(pady=(10, 0))
+
+        # Combobox za filter
+        self.filter_combobox = ttk.Combobox(self.frame_right, state='readonly')
+        
+        self.filter_combobox.pack(pady=(0, 10))
+
+        
+      
+
+
+######################################################################################################################################################################################## 
         # Treeview za prikaz podataka u tabeli
         self.tree = ttk.Treeview(self.frame_right, columns=("ID", "Title", "Username", "URL", "Password", "Notes"), show="headings")
         self.tree.heading("ID", text="ID")
@@ -118,8 +154,8 @@ class DashboardWindow:
 
     def center_window(self):
         """Centrira prozor na ekranu."""
-        width = 800  # Širina prozora
-        height = 600  # Visina prozora
+        width = 1000  # Širina prozora
+        height = 750  # Visina prozora
         x = (self.master.winfo_screenwidth() // 2) - (width // 2)
         y = (self.master.winfo_screenheight() // 2) - (height // 2)
         self.master.geometry(f"{width}x{height}+{x}+{y}")  # Postavi geometriju prozora
@@ -164,7 +200,7 @@ class DashboardWindow:
         username = self.entry_username.get()
         password = self.entry_password.get()
         url = self.entry_url.get()
-        notes = self.entry_notes.get()
+        notes = self.entry_notes.get("1.0", "end").strip()
 
         # Proverite da li su svi potrebni podaci uneti
         if title and username and password and url:  # Možete dodati notes ako je potreban
@@ -176,7 +212,7 @@ class DashboardWindow:
             self.entry_username.delete(0, tk.END)  # Ispravljeno
             self.entry_password.delete(0, tk.END)  # Ispravljeno
             self.entry_url.delete(0, tk.END)  # Ispravljeno
-            self.entry_notes.delete(0, tk.END)  # Ispravljeno
+            self.entry_notes.delete("1.0", "end")  # Ispravljeno
 
             self.load_user_data()  # Osveži tabelu nakon dodavanja
         else:
@@ -271,8 +307,19 @@ class DashboardWindow:
         else:
             # Ova poruka se može zadržati ako želite obavestiti korisnika u slučaju problema
             tk.messagebox.showwarning("Warning", "No item selected.") 
-   
-        
+            
+    def on_entry_focus_in(self, event):
+        event.widget.config(bg='white')  # Promeni pozadinsku boju na belu
+
+    def on_entry_focus_out(self, event):
+        event.widget.config(bg='lightgrey')  # Promeni pozadinsku boju na sivu
+
+    def on_text_focus_in(self, event):
+        event.widget.config(bg='white')  # Promeni pozadinsku boju na belu
+
+    def on_text_focus_out(self, event):
+        event.widget.config(bg='lightgrey')  # Promeni pozadinsku boju na sivu        
+           
     def on_close(self):
         self.master.quit()
         self.master.destroy()

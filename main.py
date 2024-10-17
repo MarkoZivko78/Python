@@ -16,6 +16,7 @@ class App(tk.Tk):
         
         self.login_gui = LoginWindow(self)  # Prosledi self kao master
         
+        
     def on_close(self):
         """Zatvaranje GUI-a."""        
         self.quit()  # Završava mainloop

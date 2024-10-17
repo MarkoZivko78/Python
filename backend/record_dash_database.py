@@ -85,9 +85,22 @@ class Dashboard:
 
         except sqlite3.DatabaseError as e:
             print(f"Greška prilikom brisanja zapisa: {e}")    
+            
+            
+    def get_unique_titles(self):
+        query = "SELECT DISTINCT title FROM records"
+        self.cursor.execute(query)
+        return [row[0] for row in self.cursor.fetchall()]
+
+    def get_records_by_title(self, title):
+        query = "SELECT * FROM records WHERE title = ?"
+        self.cursor.execute(query, (title,))
+        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in self.cursor.fetchall()]        
         
     def generate_random_password(self, length=12):
         """Generiše nasumičnu lozinku određene dužine."""
         characters = string.ascii_letters + string.digits + string.punctuation
         password = ''.join(random.choice(characters) for _ in range(length))
         return password
+
+    
