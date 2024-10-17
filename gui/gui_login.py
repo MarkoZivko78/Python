@@ -67,7 +67,11 @@ class LoginWindow:
         """Zatvaranje GUI-a."""
         self.master.quit()  # Završava mainloop
         self.master.destroy()  # Zatvara prozor      
-        
+    
+    
+    def onlogin(self,event):
+        self.login
+   
 
 if __name__ == "__main__":
     root = tk.Tk()

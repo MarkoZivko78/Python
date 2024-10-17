@@ -1,5 +1,6 @@
 import sqlite3
-import bcrypt  # Dodaj ovu biblioteku za heširanje lozinki
+import string
+import random
 
 class Dashboard:
     
@@ -8,11 +9,10 @@ class Dashboard:
         self.create_database()
 
     def create_database(self):
-        """Kreirajte bazu podataka i tabelu ako ne postoji."""
+        """Kreirajte bazu podataka i tabelu ako ne postoji.""" 
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-
                 # Kreirajte tabelu ako ne postoji
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS records (
@@ -32,17 +32,14 @@ class Dashboard:
     def add_record(self, title, username, url, password, notes):
         """Dodajte novi zapis u tabelu."""
         try:
-            # Hashing lozinke pre skladištenja
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
                 cursor.execute('''
                     INSERT INTO records (title, username, url, password, notes)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (title, username, url, hashed_password, notes))
-
+                ''', (title, username, url, password, notes))  # Čuvanje originalne lozinke
+                
                 conn.commit()
             print("Zapis uspešno dodat.")
         except sqlite3.DatabaseError as e:
@@ -57,7 +54,19 @@ class Dashboard:
                 cursor.execute("SELECT * FROM records")
                 records = cursor.fetchall()
 
-            return records
+                readable_records = []
+                for record in records:
+                    id, title, username, url, password, notes = record
+                    # Dodajte zapis sa originalnim lozinkama
+                    readable_records.append((id, title, username, url, password, notes))
+
+            return readable_records
         except sqlite3.DatabaseError as e:
             print(f"Greška prilikom preuzimanja zapisa: {e}")
             return []
+        
+    def generate_random_password(self, length=12):
+        """Generiše nasumičnu lozinku određene dužine."""
+        characters = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(random.choice(characters) for _ in range(length))
+        return password
