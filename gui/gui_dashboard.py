@@ -1,7 +1,11 @@
 import tkinter as tk
 from tkinter import Menu, Frame, Label, Entry, Button, filedialog, messagebox
 from tkinter import ttk  # Dodaj ttk za Treeview
-from backend.dashboard import Dashboard
+from backend.record_dash_database import Dashboard
+from backend.export_records import Export
+
+
+
 
 class DashboardWindow:
     def __init__(self, master, user_id):
@@ -26,7 +30,7 @@ class DashboardWindow:
         self.file_menu = Menu(self.menu_bar, tearoff=0)
         self.file_menu.add_command(label="Create Database", command=self.create_database_gui)
         self.file_menu.add_command(label="Import Database", command=self.import_data)
-        self.file_menu.add_command(label="Export Database", command=self.export_data)
+        self.file_menu.add_command(label="Export Records", command=self.export_data)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=master.quit)
         self.menu_bar.add_cascade(label="File", menu=self.file_menu)
@@ -40,28 +44,28 @@ class DashboardWindow:
         self.frame_left = Frame(master, width=250, bg='lightgrey')
         self.frame_left.pack(side='left', fill='y')
 
-        self.label_title = Label(self.frame_left, text="Title:", bg='lightgrey')
+        self.label_title = Label(self.frame_left, text="Title:", bg='lightgrey', height=1)
         self.label_title.pack(pady=5)
         self.entry_title = Entry(self.frame_left)
         self.entry_title.pack(pady=5)
 
-        self.label_username = Label(self.frame_left, text="Username:", bg='lightgrey')
+        self.label_username = Label(self.frame_left, text="Username:", bg='lightgrey', height=1)
         self.label_username.pack(pady=5)
         self.entry_username = Entry(self.frame_left)
         self.entry_username.pack(pady=5)
 
-        self.label_password = Label(self.frame_left, text="Password:", bg='lightgrey')
+        self.label_password = Label(self.frame_left, text="Password:", bg='lightgrey', height=1)
         self.label_password.pack(pady=5)
         self.entry_password = Entry(self.frame_left, show='*')
         self.entry_password.pack(pady=5)
 
-        self.label_url = Label(self.frame_left, text="URL:", bg='lightgrey')
+        self.label_url = Label(self.frame_left, text="URL:", bg='lightgrey', height=1)
         self.label_url.pack(pady=5)
         self.entry_url = Entry(self.frame_left)
         self.entry_url.pack(pady=5)
 
         # Dodaj Label za Notes
-        self.label_notes = Label(self.frame_left, text="Notes:", bg='lightgrey')
+        self.label_notes = Label(self.frame_left, text="Notes:", bg='lightgrey', height=1)
         self.label_notes.pack(pady=5)
         self.entry_notes = Entry(self.frame_left)
         self.entry_notes.pack(pady=5)
@@ -69,7 +73,7 @@ class DashboardWindow:
         self.button_add = Button(self.frame_left, text="Add Record", command=self.add_record)
         self.button_add.pack(pady=5)
         
-        self.button_add = Button(self.frame_left, text="Delete Record")
+        self.button_add = Button(self.frame_left, text="Delete Record", command=self.delete_selected_record)
         self.button_add.pack(pady=5)
         
         self.button_generate_password = Button(self.frame_left, text="Generate Password", command=self.generate_password)
@@ -79,11 +83,13 @@ class DashboardWindow:
         self.frame_right = Frame(master)
         self.frame_right.pack(side='right', fill='both', expand=True)
 
-        self.label_table = Label(self.frame_right, text="Tabela korisnika", font=("Arial", 16))
+        self.label_table = Label(self.frame_right, text="Table Records", font=("Arial", 16))
         self.label_table.pack(pady=10)
 
         # Treeview za prikaz podataka u tabeli
-        self.tree = ttk.Treeview(self.frame_right, columns=("Title", "Username", "URL", "Password", "Notes"), show="headings")
+        self.tree = ttk.Treeview(self.frame_right, columns=("ID", "Title", "Username", "URL", "Password", "Notes"), show="headings")
+        self.tree.heading("ID", text="ID")
+        self.tree.column("ID", width=0, stretch=tk.NO)
         self.tree.heading("Title", text="Title")
         self.tree.heading("Username", text="Username")
         self.tree.heading("URL", text="URL")
@@ -125,7 +131,7 @@ class DashboardWindow:
             # Čuvanje stvarne lozinke
             self.original_passwords[record[0]] = record[4]  # Čuvanje stvarne lozinke sa ID kao ključ
             # Umetanje vrednosti u Treeview sa lozinkom kao "******"
-            self.tree.insert("", "end", values=(record[1], record[2], record[3], "******", record[5])) 
+            self.tree.insert("", "end", values=(record[0],record[1], record[2], record[3], "******", record[5])) 
     
     def toggle_password(self):
         """Prebacuje između prikaza i skrivanja lozinki u Treeview-u."""
@@ -142,7 +148,7 @@ class DashboardWindow:
         for record in records:
             # Prikazivanje stvarne lozinke ili zamena sa "******"
             password_display = self.original_passwords[record[0]] if self.show_passwords else "******"
-            self.tree.insert("", "end", values=(record[1], record[2], record[3], password_display, record[5]))        
+            self.tree.insert("", "end", values=(record[0],record[1], record[2], record[3], password_display, record[5]))        
                 
 
     def add_record(self):
@@ -161,14 +167,46 @@ class DashboardWindow:
             self.load_user_data()  # Osveži tabelu nakon dodavanja
         else:
             messagebox.showwarning("Input Error", "Sva polja moraju biti popunjena!")  # Prilagodite ovu poruku ako je potrebno
+    
+    def refresh_records_table(self):
+        """Osvežava tabelu sa podacima iz baze."""
+        # Obrisi sve trenutne redove
+        for row in self.tree.get_children():
+            self.tree.delete(row)
 
+        # Preuzmi sve zapise iz baze
+        records = self.db.get_all_records()  # Pretpostavljamo da imaš metodu za preuzimanje zapisa
+
+        # Dodaj nove redove iz baze
+        for record in records:
+            self.tree.insert('', 'end', values=record)
+
+    def delete_selected_record(self):
+        """Brisanje selektovanog zapisa."""
+        selected_item = self.tree.selection()  # Get the selected item in the Treeview
+        if selected_item:
+            # Get values of the selected row (assuming ID is stored in the first column, adjust as needed)
+            record_values = self.tree.item(selected_item, 'values')
+            title = record_values[0]  # Adjust based on how you store your values; assuming ID is first value
+
+            # Confirm the deletion
+            confirm = messagebox.askyesno("Potvrda", f"Da li ste sigurni da želite da obrišete zapis '{title}'?")
+            if confirm:
+                # Call the database method to delete the record (use ID or some unique field to delete)
+                self.db.delete_record(title)  # Assuming your database method is named delete_record
+                
+                # Refresh the table
+                self.load_user_data()
+                messagebox.showinfo("Uspeh", f"Zapis '{title}' je uspešno obrisan.")
+        else:
+            messagebox.showwarning("Greška", "Nije selektovan zapis za brisanje.")    
 
     def create_database_gui(self):
         db_path = filedialog.asksaveasfilename(defaultextension=".db",
                                                  filetypes=[("SQLite Database", "*.db")])
         if db_path:
             self.db = Dashboard(db_path)
-            messagebox.showinfo("Status", "Baza podataka uspešno kreirana.")
+            #messagebox.showinfo("Status", "Baza podataka uspešno kreirana.")
 
     def generate_password(self):
         """Generiše nasumičnu lozinku i postavlja je u polje za unos lozinke."""
@@ -180,10 +218,19 @@ class DashboardWindow:
         print("Import data functionality goes here")
 
     def export_data(self):
-        print("Export data functionality goes here")
+        
+        db_path = "databases/users_database.db"  # Putanja do tvoje baze podataka
+        csv_file_path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                                    filetypes=[("CSV files", "*.csv")])
+        if csv_file_path:
+            exporter = Export(db_path)  
+            exporter.export_to_csv(csv_file_path)  
+        else:
+            messagebox.showinfo("Export Cancelled", "Izvoz podataka je otkazan.")
 
     def show_about(self):
         messagebox.showinfo("About", "Ovo je dashboard aplikacija.")
+        
         
     def on_close(self):
         self.master.quit()
