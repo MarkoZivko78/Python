@@ -8,7 +8,7 @@ class Dashboard:
     def __init__(self, db_path):
         self.db_path = db_path
         self.create_database()
-
+        
     def create_database(self):
         """Kreirajte bazu podataka i tabelu ako ne postoji.""" 
         # Proverite da li baza podataka već postoji
@@ -37,26 +37,24 @@ class Dashboard:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-
                 cursor.execute('''
                     INSERT INTO records (title, username, url, password, notes)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (title, username, url, password, notes))  # Čuvanje originalne lozinke
-                
+                ''', (title, username, url, password, notes))
                 conn.commit()
-            print("Zapis uspešno dodat.")
+                print("Zapis uspešno dodat.")
+                return True
         except sqlite3.DatabaseError as e:
             print(f"Greška prilikom dodavanja zapisa: {e}")
+            return False
 
     def get_all_records(self):
         """Vratite sve zapise iz tabele."""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-
                 cursor.execute("SELECT * FROM records")
                 records = cursor.fetchall()
-
                 readable_records = []
                 for record in records:
                     id, title, username, url, password, notes = record
@@ -88,14 +86,17 @@ class Dashboard:
             
             
     def get_unique_titles(self):
-        query = "SELECT DISTINCT title FROM records"
-        self.cursor.execute(query)
-        return [row[0] for row in self.cursor.fetchall()]
-
-    def get_records_by_title(self, title):
-        query = "SELECT * FROM records WHERE title = ?"
-        self.cursor.execute(query, (title,))
-        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in self.cursor.fetchall()]        
+        """Vraća jedinstvene naslove iz tabele records."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                query = "SELECT DISTINCT title FROM records"
+                cursor.execute(query)
+                titles = [row[0] for row in cursor.fetchall()]
+                return titles
+        except sqlite3.DatabaseError as e:
+            print(f"Greška prilikom preuzimanja naslova: {e}")
+            return []
         
     def generate_random_password(self, length=12):
         """Generiše nasumičnu lozinku određene dužine."""
@@ -103,4 +104,4 @@ class Dashboard:
         password = ''.join(random.choice(characters) for _ in range(length))
         return password
 
-    
+                

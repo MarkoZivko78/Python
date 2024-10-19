@@ -11,18 +11,15 @@ class DashboardWindow:
         self.user_id = user_id  # Čuvaj user_id za buduću upotrebu
         master.title("NMD SecurePass")
 
-        self.db = Dashboard("databases/users_database.db")  # Putanja do baze
-        
+         # Putanja do baze podataka
+        db_path = "databases/users_database.db"
+        self.db = Dashboard(db_path)  # Kreiraj instancu Dashboard klase
         self.show_passwords = False
-        
-
-        # Postavi dimenzije prozora
         master.geometry("1000x750")  
         
         # Kreiraj menije
         self.menu_bar = Menu(master)
-        master.config(menu=self.menu_bar)
-        
+        master.config(menu=self.menu_bar)        
         master.protocol("WM_DELETE_WINDOW", self.on_close)
 
         # Dodaj File meni
@@ -117,11 +114,17 @@ class DashboardWindow:
         self.filter_combobox = ttk.Combobox(self.frame_right, state='readonly')
         
         self.filter_combobox.pack(pady=(0, 10))
+        self.load_titles()
 
-        
-      
-
-
+    def load_titles(self):
+        """Popunite combobox jedinstvenim naslovima."""
+        titles = self.db.get_unique_titles()  # Pozivanje funkcije iz Dashboard klase
+        if titles:
+            self.filter_combobox['values'] = titles  # Popunite combobox sa vrednostima
+        else:
+            self.filter_combobox['values'] = ["Nema dostupnih naslova"]
+            
+            ##Treba da se doradi za filter            
 ######################################################################################################################################################################################## 
         # Treeview za prikaz podataka u tabeli
         self.tree = ttk.Treeview(self.frame_right, columns=("ID", "Title", "Username", "URL", "Password", "Notes"), show="headings")
@@ -131,25 +134,19 @@ class DashboardWindow:
         self.tree.heading("Username", text="Username")
         self.tree.heading("URL", text="URL")
         self.tree.heading("Password", text="Password", command=self.toggle_password)  # Poveži toggle_password
-        self.tree.heading("Notes", text="Notes")
-        
+        self.tree.heading("Notes", text="Notes")        
         self.tree.column("Title", width=100)
         self.tree.column("Username", width=100)
         self.tree.column("URL", width=150)
         self.tree.column("Password", width=100)
         self.tree.column("Notes", width=150)
-
         self.tree.pack(pady=10, fill='both', expand=True)
-
+        
         # Učitaj korisničke podatke
-        self.load_user_data()
-        
+        self.load_user_data()        
         self.context_menu = Menu(self.master, tearoff=0)
-        self.context_menu.add_command(label="Copy", command=self.copy_selected_data)
-        
-        self.tree.bind("<Button-3>", self.show_context_menu)
-        
-
+        self.context_menu.add_command(label="Copy", command=self.copy_selected_data)        
+        self.tree.bind("<Button-3>", self.show_context_menu)    
         self.master.after(100, self.center_window)
 
     def center_window(self):
@@ -193,7 +190,6 @@ class DashboardWindow:
             password_display = self.original_passwords[record[0]] if self.show_passwords else "******"
             self.tree.insert("", "end", values=(record[0],record[1], record[2], record[3], password_display, record[5]))        
                 
-
     def add_record(self):
         """Dodajte novi zapis u bazu podataka."""
         title = self.entry_title.get()
@@ -213,7 +209,6 @@ class DashboardWindow:
             self.entry_password.delete(0, tk.END)  # Ispravljeno
             self.entry_url.delete(0, tk.END)  # Ispravljeno
             self.entry_notes.delete("1.0", "end")  # Ispravljeno
-
             self.load_user_data()  # Osveži tabelu nakon dodavanja
         else:
             messagebox.showwarning("Input Error", "Sva polja moraju biti popunjena!")
@@ -267,8 +262,7 @@ class DashboardWindow:
     def import_data(self):
         print("Import data functionality goes here")
 
-    def export_data(self):
-        
+    def export_data(self):        
         db_path = "databases/users_database.db"  # Putanja do tvoje baze podataka
         csv_file_path = filedialog.asksaveasfilename(defaultextension=".csv",
                                                     filetypes=[("CSV files", "*.csv")])

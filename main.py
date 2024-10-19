@@ -12,10 +12,8 @@ class App(tk.Tk):
         self.iconbitmap('icons/icon.ico')  # Putanja do .ico ikone
 
         # Učitavanje ikona (npr. za dugmad)
-        self.icon1 = PhotoImage(file='icons/ico.png')  # Putanja do prve ikone
-        
-        self.login_gui = LoginWindow(self)  # Prosledi self kao master
-        
+        self.icon1 = PhotoImage(file='icons/ico.png')  # Putanja do prve ikone        
+        self.login_gui = LoginWindow(self)  # Prosledi self kao master        
         
     def on_close(self):
         """Zatvaranje GUI-a."""        
