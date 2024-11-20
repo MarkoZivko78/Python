@@ -4,6 +4,7 @@ from tkinter import ttk  # Dodaj ttk za Treeview
 from backend.record_dash_database import Dashboard
 from backend.export_records import Export
 import pyperclip
+import sqlite3
 
 class DashboardWindow:
     def __init__(self, master, user_id):
@@ -118,6 +119,7 @@ class DashboardWindow:
 
     def load_titles(self):
         """Popunite combobox jedinstvenim naslovima."""
+        
         titles = self.db.get_unique_titles()  # Pozivanje funkcije iz Dashboard klase
         if titles:
             self.filter_combobox['values'] = titles  # Popunite combobox sa vrednostima

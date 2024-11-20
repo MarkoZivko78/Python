@@ -30,7 +30,8 @@ class Dashboard:
             except sqlite3.DatabaseError as e:
                 print(f"Greška prilikom kreiranja baze: {e}")
         else:
-            print("Baza podataka već postoji, tabela se neće ponovo kreirati.")
+            #print("Baza podataka već postoji, tabela se neće ponovo kreirati.")
+            print()
 
     def add_record(self, title, username, url, password, notes):
         """Dodajte novi zapis u tabelu."""
@@ -42,10 +43,10 @@ class Dashboard:
                     VALUES (?, ?, ?, ?, ?)
                 ''', (title, username, url, password, notes))
                 conn.commit()
-                print("Zapis uspešno dodat.")
+                #print("Zapis uspešno dodat.")
                 return True
         except sqlite3.DatabaseError as e:
-            print(f"Greška prilikom dodavanja zapisa: {e}")
+            #print(f"Greška prilikom dodavanja zapisa: {e}")
             return False
 
     def get_all_records(self):

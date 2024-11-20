@@ -2,6 +2,7 @@ import tkinter as tk
 from gui.gui_login import LoginWindow  # Uvezi LoginWindow klasu
 from tkinter import PhotoImage
 
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()  # Inicijalizacija Tkinter klase
@@ -17,7 +18,8 @@ class App(tk.Tk):
         
     def on_close(self):
         """Zatvaranje GUI-a."""        
-        self.quit()  # Završava mainloop
+        self.quit()  # Završava mainloopclear
+        
         self.destroy()  # Zatvara prozor 
         
 if __name__ == "__main__":
